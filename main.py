@@ -1,30 +1,43 @@
-voted_ids = {}
-parties = ['A', 'B', 'C', 'D']
-votes = {}
-while True:
-    voter_id = input('Enter your ID: ')
-    if voter_id == '-999':
-        break
-    if voted_ids.get(voter_id) is not None:
-        party = voted_ids.get(voter_id)
-        votes.update(F=votes.get('F', 0) + 1)
-        votes.update({party: votes.get(party, 1) - 1})  # Setting the default doesn't make a sense but I got type warning without it.
-        print('Your vote is disqualified.')
-        continue
+from collections import defaultdict
+
+voters = defaultdict(str) # voters dict
+parties = ['A', 'B', 'C', 'D'] # parties
+party_votes = defaultdict(int) # parties' votes
+
+def get_valid_vote() -> str:
     while True:
-        vote_selection = input(f'Choose a party [{','.join(parties)}]: ')
-        match vote_selection:
-            case n if n in parties:
-                voted_ids.update({voter_id: vote_selection})
-                votes.update({vote_selection: votes.get(vote_selection, 0) + 1})
-                break
-            case _:
-                print('Invalid vote, try again.')
-print(f'Sum of all votes: {sum(votes.values())}')
-print('-' * 10)
-for party, amount in votes.items():
-    print(f'Party: {party} got {amount} votes.')
-print('-' * 10)
-for party in sorted(votes, key=votes.get, reverse=True):
-    amount = votes.get(party)
-    print(f'Party: {party} got {amount} votes.')
+        selection = input(f'Choose a party [{', '.join(parties)}]: ')
+        if selection in parties:
+            return selection
+        else:
+            print('Invalid selection, try again.')
+
+def output_results():
+    print('-' * 5, 'Results', '-' * 5)
+    print(f'Sum of all votes: {sum(party_votes.values())}')
+    print()
+    print('Not Sorted | ', end='')
+    for p, amount in party_votes.items():
+        print(f'{p}: {amount}', end=' | ')
+    print()
+    print('Sorted | ', end='')
+    for p in sorted(party_votes, key=party_votes.get, reverse=True): # type: ignore
+        print(f'{p}: {party_votes[p]}', end=' | ')
+
+while True: # voters loop
+    voter_id = input("Enter voter ID: ")
+    match voter_id:
+        case '-999':
+            break
+        case n if voters.get(n):
+            party = voters.get(n)
+            party_votes[party] -= 1
+            party_votes['F'] += 1
+            voters[n] = 'F'
+            print('Your vote is disqualified!')
+            continue
+    voter_party = get_valid_vote()
+    voters[voter_id] = voter_party
+    party_votes[voter_party] += 1
+
+output_results()
